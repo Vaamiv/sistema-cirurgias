@@ -1,61 +1,125 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema Cirurgias — MVP (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este pacote contém **o código de aplicação** (controllers, models, migrations e views) para colar em um projeto Laravel.
+Ele **não** contém o core do Laravel. Abaixo segue o passo a passo **do zero**, instalação, e como hospedar.
 
-## About Laravel
+## 0) Requisitos (Windows 10/11)
+1. **PHP 8.2+** — recomendo instalar com o [XAMPP](https://www.apachefriends.org/) (marca Apache + PHP). Alternativa avançada: instalar PHP standalone e adicionar ao PATH.
+2. **Composer** — baixe o instalador: https://getcomposer.org/Composer-Setup.exe (ele detecta o PHP automaticamente).
+3. **Node.js 18+** — https://nodejs.org/ (LTS).
+4. **Git** (opcional, mas recomendado) — https://git-scm.com/download/win
+5. **MySQL** (pode vir com XAMPP) ou **PostgreSQL**. Para MVP, MySQL é mais simples.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> Linux (Ubuntu 22.04+): `sudo apt update && sudo apt install -y php8.2-cli php8.2-mbstring php8.2-xml php8.2-curl php8.2-sqlite3 unzip nodejs npm mysql-server git` e instale Composer conforme docs.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 1) Criar projeto Laravel do zero
+```bash
+# 1. Crie uma pasta de trabalho e entre nela
+mkdir sistema-cirurgias && cd sistema-cirurgias
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+# 2. Baixe o Laravel base (isso instala vendor/, artisan etc.)
+composer create-project laravel/laravel .
 
-## Learning Laravel
+# 3. Instale pacotes de app
+composer require spatie/laravel-activitylog pusher/pusher-php-server
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# 4. Front-end
+npm install
+npm install fullcalendar pusher-js
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 2) Configurar .env e chave do app
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+Abra `.env` e configure:
+- **DB_CONNECTION/DB_HOST/DB_DATABASE/DB_USERNAME/DB_PASSWORD** (MySQL local ou server do hospital)
+- **APP_TIMEZONE=America/Sao_Paulo**
+- Broadcasting e WebSockets (veja seção *Tempo real*).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 3) Copiar o conteúdo deste ZIP para dentro do seu projeto
+Copie as pastas deste zip para **substituir/mesclar** no seu projeto recém-criado:
+```
+app/
+database/
+public/js/
+resources/views/
+routes/
+```
+> Se te pedir para **mesclar/substituir**, aceite (são apenas os arquivos do app).
 
-## Laravel Sponsors
+## 4) Rodar migrações e assets
+```bash
+php artisan migrate
+npm run build    # ou: npm run dev
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 5) (Opcional) Autenticação rápida (Breeze)
+```bash
+composer require laravel/breeze --dev
+php artisan breeze:install blade
+npm install && npm run build
+php artisan migrate
+```
+Depois, proteja as rotas com `auth` se desejar (já há exemplo no `routes/web.php` comentado).
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# Como hospedar (visão prática)
 
-## Contributing
+### Banco de dados
+- **On-premise**: MySQL num servidor do hospital (Windows Server ou Ubuntu). Crie um usuário e banco `sistema_cirurgias`.
+- **Cloud**: RDS (AWS), Cloud SQL (GCP), Azure DB. Basta apontar o `.env` para o host da instância.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Aplicação Laravel
+- **On-premise Windows**: IIS com PHP ou rodar com Apache do XAMPP (vhost apontando para `public/`).  
+- **Linux/Ubuntu** (recomendado): Nginx + PHP-FPM. Aponta o servidor para a pasta `public/` do Laravel.
+- **Docker**: compose com serviços `app`, `nginx`, `mysql` e (se usar) `websockets`.
 
-## Code of Conduct
+### Tempo real (2 caminhos)
+1) **Pusher** (SaaS): simples — configurar as chaves no `.env`. O front recebe eventos via Pusher; não hospeda servidor WS.
+2) **Laravel WebSockets** (on-premise): instalar `beyondcode/laravel-websockets`, rodar `php artisan websockets:serve` em serviço.  
+   - Precisa também rodar **queue worker** para broadcasts: `php artisan queue:work`.
+   - No `.env`, use host/port locais do servidor WS.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Fluxo em tempo real:**
+- Recepção cria/edita cirurgia ⇒ Controller emite `event(new SurgeryUpdated(...))` ⇒ Laravel transmite via Broadcast (Pusher/WS) no **canal `surgeries`** ⇒ Front-end (**FullCalendar**) escuta e faz `refetchEvents()` ⇒ tela do centro cirúrgico atualiza sem F5.
 
-## Security Vulnerabilities
+### Backups e logs
+- Ative backup periódico do **banco de dados** (dump diário).  
+- `spatie/laravel-activitylog` já registra **quem mudou o quê** (auditoria).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+# Ordem cronológica dos arquivos a criar/editar
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. `composer.json` e estrutura base → criado pelo `composer create-project` (passo 1).
+2. `routes/web.php` e `routes/api.php` (do ZIP) → adicionam rotas da UI e API.
+3. `app/Events/SurgeryUpdated.php` → evento broadcast.
+4. `app/Models/Patient.php` e `app/Models/Surgery.php` → modelos mínimos.
+5. `database/migrations/*create_patients_table.php` e `*create_surgeries_table.php` → esquema do banco.
+6. `app/Http/Controllers/CalendarController.php` e `SurgeryController.php` → lógica de CRUD e API.
+7. `resources/views/...` → layouts, calendário (FullCalendar) e telas de create/edit/list.
+8. `.env` → credenciais de DB + Broadcasting.
+9. `public/js/echo-init.js` (opcional, caso queira centralizar Echo) e `resources/js/app.js` (caso vá usar Vite para carregar libs).
+10. (Opcional) `breeze` e policies/middlewares para travar acesso por setor.
+
+---
+
+# Rodar localmente (desenvolvimento)
+```bash
+php artisan serve    # levanta a app (http://127.0.0.1:8000)
+# Em outra janela:
+php artisan queue:work   # se usando broadcast
+# E (se usar WebSockets on-premise em vez de Pusher):
+php artisan websockets:serve
+```
+Acesse `/` para ver o Calendário; `/surgeries` para o CRUD.
+
+---
+
+# Dúvidas comuns
+- **Onde ficam os dados?** No **MySQL** configurado no `.env`. O Laravel cria as tabelas via migrations.
+- **Preciso de site externo?** Não. Pode ser **on-premise** (rede interna do hospital). Se quiser acesso externo, hospede num VPS e feche firewall/ACLs por IP.
+- **Sem internet?** Use **Laravel WebSockets** on-premise. Evite Pusher (depende de internet).
