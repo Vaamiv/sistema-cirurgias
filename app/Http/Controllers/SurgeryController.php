@@ -68,27 +68,47 @@ class SurgeryController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'patient_name'     => 'required|string|max:255',
-            'surgery_datetime' => 'required|date',
-            'surgeon_name'     => 'required|string|max:255',
-            'status'           => 'nullable|in:agendada,confirmada,em_andamento,finalizada,adiada,cancelada',
+            'patient_name'          => 'required|string|max:255',
+            'patient_birth_date'    => 'nullable|date',
+            'patient_phone'         => 'nullable|string|max:255',
+            'surgery_datetime'      => 'required|date',
+            'surgeon_name'          => 'required|string|max:255',
+            'responsible_assistant' => 'nullable|string|max:255',
+            'surgery_type'          => 'required|in:limpa,contaminada',
+            'procedure_type'        => 'nullable|string|max:255',
+            'necessary_materials'   => 'nullable|string',
+            'scheduled_by'          => 'nullable|string|max:255',
+            'is_elective'           => 'required|boolean',
+            'status'                => 'nullable|in:agendada,confirmada,em_andamento,finalizada,adiada,cancelada',
         ]);
 
-        $patient = Patient::firstOrCreate(['name' => $data['patient_name']]);
+        $patient = Patient::updateOrCreate(
+            ['name' => $data['patient_name']],
+            [
+                'birth_date' => $data['patient_birth_date'],
+                'contact' => $data['patient_phone'],
+            ]
+        );
 
         $start = Carbon::parse($data['surgery_datetime']);
         $end   = (clone $start)->addMinutes(60); // padrão 60min
 
         $surgery = Surgery::create([
-            'patient_id'   => $patient->id,
-            'surgeon_name' => $data['surgeon_name'],
-            'start_at'     => $start,
-            'end_at'       => $end,
-            'status'       => $request->input('status','agendada'),
+            'patient_id'            => $patient->id,
+            'surgeon_name'          => $data['surgeon_name'],
+            'start_at'              => $start,
+            'end_at'                => $end,
+            'status'                => $request->input('status', 'agendada'),
+            'responsible_assistant' => $data['responsible_assistant'],
+            'surgery_type'          => $data['surgery_type'],
+            'procedure_type'        => $data['procedure_type'],
+            'necessary_materials'   => $data['necessary_materials'],
+            'scheduled_by'          => $data['scheduled_by'],
+            'is_elective'           => $data['is_elective'],
         ]);
 
         event(new SurgeryUpdated($surgery->fresh('patient')));
-        return redirect()->route('surgeries.index')->with('success','Cirurgia criada.');
+        return redirect()->route('surgeries.index')->with('success', 'Cirurgia criada.');
     }
 
     public function edit(Surgery $surgery)
@@ -100,34 +120,62 @@ class SurgeryController extends Controller
     public function update(Request $request, Surgery $surgery)
     {
         $data = $request->validate([
-            'patient_name'     => 'required|string|max:255',
-            'surgery_datetime' => 'required|date',
-            'surgeon_name'     => 'required|string|max:255',
-            'status'           => 'nullable|in:agendada,confirmada,em_andamento,finalizada,adiada,cancelada',
+            'patient_name'          => 'required|string|max:255',
+            'patient_birth_date'    => 'nullable|date',
+            'patient_phone'         => 'nullable|string|max:255',
+            'surgery_datetime'      => 'required|date',
+            'surgeon_name'          => 'required|string|max:255',
+            'responsible_assistant' => 'nullable|string|max:255',
+            'surgery_type'          => 'required|in:limpa,contaminada',
+            'procedure_type'        => 'nullable|string|max:255',
+            'necessary_materials'   => 'nullable|string',
+            'scheduled_by'          => 'nullable|string|max:255',
+            'is_elective'           => 'required|boolean',
+            'status'                => 'nullable|in:agendada,confirmada,em_andamento,finalizada,adiada,cancelada',
         ]);
 
-        $patient = Patient::firstOrCreate(['name' => $data['patient_name']]);
+        $patient = Patient::updateOrCreate(
+            ['name' => $data['patient_name']],
+            [
+                'birth_date' => $data['patient_birth_date'],
+                'contact' => $data['patient_phone'],
+            ]
+        );
 
         $start = Carbon::parse($data['surgery_datetime']);
         $end   = (clone $start)->addMinutes(60);
 
         $surgery->update([
-            'patient_id'   => $patient->id,
-            'surgeon_name' => $data['surgeon_name'],
-            'start_at'     => $start,
-            'end_at'       => $end,
-            'status'       => $request->input('status','agendada'),
+            'patient_id'            => $patient->id,
+            'surgeon_name'          => $data['surgeon_name'],
+            'start_at'              => $start,
+            'end_at'                => $end,
+            'status'                => $request->input('status', 'agendada'),
+            'responsible_assistant' => $data['responsible_assistant'],
+            'surgery_type'          => $data['surgery_type'],
+            'procedure_type'        => $data['procedure_type'],
+            'necessary_materials'   => $data['necessary_materials'],
+            'scheduled_by'          => $data['scheduled_by'],
+            'is_elective'           => $data['is_elective'],
         ]);
 
         event(new SurgeryUpdated($surgery->fresh('patient')));
-        return redirect()->route('surgeries.index')->with('success','Cirurgia atualizada.');
+        return redirect()->route('surgeries.index')->with('success', 'Cirurgia atualizada.');
     }
 
-    public function destroy(Surgery $surgery)
+    public function destroy(Request $request, Surgery $surgery)
     {
+        $request->validate(['archive_reason' => 'required|string|max:255']);
+        $surgery->update(['archive_reason' => $request->input('archive_reason')]);
         $surgery->delete();
         event(new SurgeryUpdated($surgery));
-        return back()->with('success','Cirurgia removida.');
+        return back()->with('success', 'Cirurgia arquivada.');
+    }
+
+    public function archived()
+    {
+        $surgeries = Surgery::onlyTrashed()->with('patient')->paginate(20);
+        return view('surgeries.archived', compact('surgeries'));
     }
 
     /** API para o FullCalendar */

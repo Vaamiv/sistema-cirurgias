@@ -63,7 +63,7 @@
   <div class="container">
     <nav class="navbar">
       <div>
-        <div class="brand">Sistema de Cirurgias</div>
+        <div class="brand">Agendamento Cirurgico</div>
         <div class="muted" style="margin-top:4px">Gerencie agendamentos de forma simples</div>
       </div>
       <div class="nav-actions">

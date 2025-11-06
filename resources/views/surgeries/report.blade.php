@@ -32,6 +32,7 @@
         <th>Data/Hora</th>
         <th>Paciente</th>
         <th>Médico</th>
+        <th>Tipo de Cirurgia</th>
         <th>Status</th>
       </tr>
     </thead>
@@ -41,10 +42,11 @@
           <td>{{ $s->start_at->format('d/m/Y H:i') }}</td>
           <td>{{ $s->patient->name }}</td>
           <td>{{ $s->surgeon_name }}</td>
+          <td>{{ ucfirst($s->surgery_type) }}</td>
           <td>{{ ucfirst(str_replace('_',' ',$s->status)) }}</td>
         </tr>
       @empty
-        <tr><td colspan="4">Nenhum registro no período.</td></tr>
+        <tr><td colspan="5">Nenhum registro no período.</td></tr>
       @endforelse
     </tbody>
   </table>

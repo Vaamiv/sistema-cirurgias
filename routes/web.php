@@ -8,6 +8,7 @@ Route::redirect('/', '/surgeries');
 
 // CRUD público (sem auth)
 Route::resource('surgeries', SurgeryController::class)->except(['show']);
+Route::get('surgeries/archived', [SurgeryController::class, 'archived'])->name('surgeries.archived');
 
 // Relatório mensal (se você usa)
 Route::get('/surgeries/report', [SurgeryController::class,'monthlyReport'])->name('surgeries.report');
