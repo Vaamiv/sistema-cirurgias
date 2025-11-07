@@ -53,6 +53,20 @@
               </td>
               <td class="right">
                 <div style="display:flex;gap:8px;justify-content:flex-end">
+                  <button class="btn btn-outline js-view-btn"
+                    data-patient-name="{{ $s->patient->name }}"
+                    data-patient-birth-date="{{ $s->patient->birth_date?->format('d/m/Y') ?? 'N/A' }}"
+                    data-patient-contact="{{ $s->patient->contact }}"
+                    data-start-at="{{ $s->start_at->format('d/m/Y H:i') }}"
+                    data-assistant="{{ $s->responsible_assistant }}"
+                    data-surgery-type="{{ ucfirst($s->surgery_type) }}"
+                    data-procedure-type="{{ $s->procedure_type }}"
+                    data-materials="{{ $s->necessary_materials }}"
+                    data-scheduled-by="{{ $s->scheduled_by }}"
+                    data-urgency="{{ $s->is_elective ? 'Eletiva' : 'Urgência' }}"
+                    data-status="{{ ucfirst(str_replace('_',' ',$s->status)) }}"
+                    >Visualizar</button>
+
                   <a href="{{ route('surgeries.edit',$s) }}"
                     class="btn btn-outline js-edit"
                     data-edit-url="{{ route('surgeries.edit',$s) }}"
@@ -130,6 +144,34 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmButtonColor: '#4f46e5',
       }).then((res) => {
         if (res.isConfirmed) window.location.href = url;
+      });
+    });
+  });
+
+  // Modal de VISUALIZAÇÃO
+  document.querySelectorAll('.js-view-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const data = e.target.dataset;
+      Swal.fire({
+        title: `Detalhes da Cirurgia`,
+        html: `
+          <div style="text-align:left;padding: 0 2rem">
+            <p><strong>Paciente:</strong> ${data.patientName}</p>
+            <p><strong>Data de Nascimento:</strong> ${data.patientBirthDate}</p>
+            <p><strong>Telefone:</strong> ${data.patientContact}</p>
+            <hr>
+            <p><strong>Data/Hora:</strong> ${data.startAt}</p>
+            <p><strong>Auxiliar:</strong> ${data.assistant}</p>
+            <p><strong>Tipo de Cirurgia:</strong> ${data.surgeryType}</p>
+            <p><strong>Tipo de Procedimento:</strong> ${data.procedureType}</p>
+            <p><strong>Material Necessário:</strong> ${data.materials}</p>
+            <p><strong>Agendado por:</strong> ${data.scheduledBy}</p>
+            <p><strong>Urgência:</strong> ${data.urgency}</p>
+            <p><strong>Status:</strong> ${data.status}</p>
+          </div>
+        `,
+        showCancelButton: false,
+        confirmButtonText: 'Fechar',
       });
     });
   });
